@@ -195,6 +195,7 @@ export class UsuarioController {
       login.token = '';
       login.estadoToken = false; // falso porque no se ha utilizado el token
       this.loginRepository.create(login);
+      usuario.clave = ''; // para no exponer la calve cifrada
       //notificar al usuario via correo o sms
       return usuario;
     }
@@ -220,6 +221,19 @@ export class UsuarioController {
       let token = this.servicioSeguridad.crearToken(usuario);
       if (usuario) {
         usuario.clave = ''; // para no exponer la calve cifrada
+        try {
+          this.usuarioRepository.logins(usuario._id).patch(
+            {
+              estadoCodigo2fa: true,
+              token: token,
+            },
+            {
+              estadoCodigo2fa: false,
+            },
+          );
+        } catch {
+          console.log('No se pudo actualizar el estado del código 2fa');
+        }
         return {
           user: usuario,
           token: token,
