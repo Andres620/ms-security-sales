@@ -20,15 +20,17 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {UserProfile} from '@loopback/security';
 import {ConfiguracionSeguridad} from '../config/seguridad.config';
 import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
   Login,
+  PermisosRolMenu,
   Usuario,
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
-import {SeguridadUsuarioService} from '../services';
+import {AuthService, SeguridadUsuarioService} from '../services';
 
 export class UsuarioController {
   constructor(
@@ -38,6 +40,8 @@ export class UsuarioController {
     public servicioSeguridad: SeguridadUsuarioService,
     @repository(LoginRepository)
     public loginRepository: LoginRepository,
+    @service(AuthService)
+    private servicioAuth: AuthService,
   ) {}
 
   @post('/usuario')
@@ -209,6 +213,30 @@ export class UsuarioController {
       return usuario;
     }
     return new HttpErrors[401]('Las credenciales no son correctas');
+  }
+
+  @post('/validar-permisos')
+  @response(200, {
+    description: 'Validación de permisos de un usuario para lógica de negocio',
+    content: {'application/json': {schema: getModelSchemaRef(PermisosRolMenu)}},
+  })
+  async validarPermisosDeUsuario(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(PermisosRolMenu),
+        },
+      },
+    })
+    datos: PermisosRolMenu,
+  ): Promise<UserProfile | undefined> {
+    let res = await this.servicioAuth.verificarPermisoDeUsuarioPorRol(
+      datos.idRol,
+      datos.idMenu,
+      datos.accion,
+    );
+
+    return res;
   }
 
   @post('/verificar-2fa')
