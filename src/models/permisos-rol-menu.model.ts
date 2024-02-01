@@ -6,7 +6,7 @@ export class PermisosRolMenu extends Model {
     type: 'string',
     required: true,
   })
-  idRol: string;
+  token: string;
 
   @property({
     type: 'string',
@@ -20,7 +20,6 @@ export class PermisosRolMenu extends Model {
   })
   accion: string;
 
-
   constructor(data?: Partial<PermisosRolMenu>) {
     super(data);
   }
@@ -30,4 +29,5 @@ export interface PermisosRolMenuRelations {
   // describe navigational properties here
 }
 
-export type PermisosRolMenuWithRelations = PermisosRolMenu & PermisosRolMenuRelations;
+export type PermisosRolMenuWithRelations = PermisosRolMenu &
+  PermisosRolMenuRelations;

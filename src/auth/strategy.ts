@@ -40,7 +40,7 @@ export class AuthStrategy implements AuthenticationStrategy {
   async authenticate(request: Request): Promise<UserProfile | undefined> {
     let token = parseBearerToken(request);
     if (token) {
-      let idRol = this.servicioSeguridad.obtenerRolDesdeTojen(token);
+      let idRol = this.servicioSeguridad.obtenerRolDesdeToken(token);
       let idMenu = this.metadata[0].options![0];
       let accion = this.metadata[0].options![1];
       console.log('Metadata', this.metadata);
