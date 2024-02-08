@@ -25,6 +25,7 @@ import {ConfiguracionNotificaciones} from '../config/notificaciones.config';
 import {ConfiguracionSeguridad} from '../config/seguridad.config';
 import {
   Credenciales,
+  CredencialesRecuperarClave,
   FactorDeAutenticacionPorCodigo,
   Login,
   PermisosRolMenu,
@@ -224,7 +225,43 @@ export class UsuarioController {
         asuntoCorreo: ConfiguracionNotificaciones.asunto2fa,
       };
       let url = ConfiguracionNotificaciones.urlNotificaciones2fa;
-      this.servicioNotificaciones.EnviarCorreoElectronico(datos, url);
+      this.servicioNotificaciones.EnviarNotificacion(datos, url);
+      return usuario;
+    }
+    return new HttpErrors[401]('Las credenciales no son correctas');
+  }
+
+  @post('/recuperar-clave')
+  @response(200, {
+    description: 'Identificar un usuario por correo y clave',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async recuperarClaveUsuario(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(CredencialesRecuperarClave),
+        },
+      },
+    })
+    credenciales: CredencialesRecuperarClave,
+  ): Promise<object> {
+    let usuario = await this.usuarioRepository.findOne({
+      where: {correo: credenciales.correo},
+    });
+    if (usuario) {
+      let nuevaClave = this.servicioSeguridad.crearTextoAleatorio(5);
+      console.log('Nueva clave: ', nuevaClave);
+      let claveCifrada = this.servicioSeguridad.cifrarTexto(nuevaClave);
+      usuario.clave = claveCifrada;
+      this.usuarioRepository.updateById(usuario._id, usuario);
+      //notificar al usuario via sms
+      let datos = {
+        numeroDestino: usuario.celular,
+        contenidoMensaje: `Hola ${usuario.primerNombre}, su nueva clave eso: ${nuevaClave}`,
+      };
+      let url = ConfiguracionNotificaciones.urlNotificacionesSms;
+      this.servicioNotificaciones.EnviarNotificacion(datos, url);
       return usuario;
     }
     return new HttpErrors[401]('Las credenciales no son correctas');
